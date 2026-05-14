@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+
+# ruff
+.ruff_cache/
+
+# Virtual environments
+.venv/
+
+# asciinemas
+*.cast
+
+# builds
+dist/
+build/
+*.whl
