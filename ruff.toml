@@ -1,0 +1,14 @@
+line-length = 88
+target-version = "py312"
+
+[lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "C",
+]
+
+[lint.isort]
+known-first-party = ["paas"]
