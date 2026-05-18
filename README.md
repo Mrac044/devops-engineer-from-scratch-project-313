@@ -9,3 +9,7 @@
 ## Запуск приложения
 
 Команда: `make run`
+
+## Ссылка на развёрнутое приложение
+
+https://devops-engineer-from-scratch-project-313-mk6v.onrender.com/
