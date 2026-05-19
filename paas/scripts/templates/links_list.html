@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>All Short Links</h1>
+    <p><a href="/links/new">Create new</a></p>
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Short name</th><th>Original URL</th><th>Short URL</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        {% for link in links %}
+            <tr>
+                <td>{{ link.id }}</td>
+                <td>{{ link.short_name }}</td>
+                <td>{{ link.original_url }}</td>
+                <td><a href="{{ link.short_url }}" target="_blank">{{ link.short_url }}</a></td>
+                <td>
+                    <a href="/links/{{ link.id }}/edit">Edit</a>
+                    <form action="/links/{{ link.id }}/delete" method="post" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p><a href="/">Home</a></p>
+{% endblock %}
