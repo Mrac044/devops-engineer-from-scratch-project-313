@@ -1,6 +1,7 @@
 import os
-from sqlmodel import create_engine, Session
+
 from dotenv import load_dotenv
+from sqlmodel import Session, create_engine
 
 load_dotenv()
 database_url = os.getenv("DATABASE_URL")
