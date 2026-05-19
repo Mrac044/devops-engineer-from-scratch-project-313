@@ -1,4 +1,5 @@
 flask
 sqlmodel
+sqlalchemy
 dotenv
 datetime
