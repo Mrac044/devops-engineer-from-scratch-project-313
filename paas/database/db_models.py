@@ -8,7 +8,4 @@ class Links(SQLModel, table=True):
     original_url: str = Field(index=True)
     short_name: str = Field(unique=True, index=True)
     short_url: str = Field()
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        sa_column=sa.Column(sa.DateTime(timezone=True), server_default=sa.func.now())
-    )
+    created_at: datetime = Field(default_factory=datetime.now)

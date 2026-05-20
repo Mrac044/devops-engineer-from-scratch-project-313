@@ -1,6 +1,4 @@
-import db_models
-
-from . import db_engine
+from . import db_engine, db_models
 from sqlmodel import Field, Session, SQLModel
 
 

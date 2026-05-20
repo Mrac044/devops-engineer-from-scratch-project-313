@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head>
+    <title>Short Links - Add</title>
+</head>
+<body>
+    <a href="{{ url_for('get_links') }}">All links</a>
+    <h1>Create short link</h1>
+    <form action="{{ url_for('links_link') }}" method="post">
+        {% include 'form.html' %}
+        <br>
+        <input type="submit" value="Add link">
+    </form>
+</body>
+</html>

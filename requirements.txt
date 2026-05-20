@@ -3,3 +3,4 @@ sqlmodel
 sqlalchemy
 dotenv
 datetime
+psycopg2-binary

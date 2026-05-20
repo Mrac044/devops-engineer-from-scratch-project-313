@@ -1,124 +1,135 @@
 import os
 
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash, get_flashed_messages
 from sqlmodel import Session, select
 from ..database import db_engine, create_db_and_tables, db_models
+from .validator import validate
 
-with create_db_and_tables():
-    pass
+
+create_db_and_tables()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
-app.config['BASE_URL'] = os.getenv('BASE_URL', 'http://localhost:8080')
-
-
-def get_link_or_404(link_id: int, session: Session):
-    return session.get(db_models.Links, link_id)
-
 
 @app.route('/')
-def home():
+def start_page():
     return render_template('index.html')
 
-
-@app.route('/links')
-def list_links():
+@app.route('/api/links')
+def get_links():
     with Session(db_engine) as session:
-        links = session.exec(select(db_models.Links)).all()
-        return render_template('links_list.html', links=links, base_url=app.config['BASE_URL'])
+        links = session.exec(select(db_models.Links).order_by(db_models.Links.created_at)).all()
 
+    messages = get_flashed_messages(with_categories=True)
+    links_list = [link.model_dump() for link in links]
 
-@app.route('/links/new', methods=['GET', 'POST'])
-def create_link_ui():
-    if request.method == 'POST':
-        original_url = request.form.get('original_url')
-        short_name = request.form.get('short_name')
-        if not original_url or not short_name:
-            flash('Both fields are required', 'error')
-            return render_template('link_form.html', link=None), 400
+    return render_template('links_list.html', links=links_list, messages=messages)
 
-        with Session(db_engine) as session:
-            existing = session.exec(
-                select(db_models.Links).where(db_models.Links.short_name == short_name)
-            ).first()
-            if existing:
-                flash('Short name already taken', 'error')
-                return render_template('link_form.html', link=None), 409
+@app.route('/api/links/new')
+def add_link():
+    return render_template('form_add.html', link={}, errors={})
 
-            short_url = f"{app.config['BASE_URL']}/r/{short_name}"
-            new_link = db_models.Links(
-                original_url=original_url,
-                short_name=short_name,
-                short_url=short_url
-            )
-            session.add(new_link)
-            session.commit()
-        flash('Link created successfully', 'success')
-        return redirect(url_for('list_links'))
-    return render_template('link_form.html', link=None)
-
-
-@app.route('/links/<int:link_id>/edit', methods=['GET', 'POST'])
-def edit_link_ui(link_id):
+@app.post('/api/links')
+def links_link():
+    data = request.form.to_dict()
+    errors = validate(data)
     with Session(db_engine) as session:
-        link = get_link_or_404(link_id, session)
-        if not link:
-            flash('Link not found', 'error')
-            return redirect(url_for('list_links'))
+        if session.exec(select(db_models.Links).where(db_models.Links.short_name == data.get('short_name'))).first():
+            errors['unique_name'] = "This name already exists"
+    if errors:
+        return render_template(
+            'form_add.html',
+            link=data,
+            errors=errors
+        ), 422
+    base_url = os.getenv('BASE_URL', 'http://localhost:8080')
+    full_short_url = f"{base_url.rstrip('/')}/{data.get('short_name')}"
+    new_link = db_models.Links(
+        original_url=data.get('original_url'),
+        short_name=data.get('short_name'),
+        short_url=full_short_url
+    )   
 
-        if request.method == 'POST':
-            original_url = request.form.get('original_url')
-            short_name = request.form.get('short_name')
-            if not original_url or not short_name:
-                flash('Both fields are required', 'error')
-                return render_template('link_form.html', link=link), 400
-
-            # Проверка уникальности если short_name изменился
-            if short_name != link.short_name:
-                existing = session.exec(
-                    select(db_models.Links).where(
-                        db_models.Links.short_name == short_name,
-                        db_models.Links.id != link_id
-                    )
-                ).first()
-                if existing:
-                    flash('Short name already taken', 'error')
-                    return render_template('link_form.html', link=link), 409
-                link.short_name = short_name
-                link.short_url = f"{app.config['BASE_URL']}/r/{short_name}"
-
-            link.original_url = original_url
-            session.add(link)
-            session.commit()
-            flash('Link updated successfully', 'success')
-            return redirect(url_for('list_links'))
-
-        return render_template('link_form.html', link=link)
-
-
-@app.route('/links/<int:link_id>/delete', methods=['POST'])
-def delete_link_ui(link_id):
     with Session(db_engine) as session:
-        link = get_link_or_404(link_id, session)
-        if not link:
-            flash('Link not found', 'error')
-        else:
-            session.delete(link)
-            session.commit()
-            flash('Link deleted successfully', 'success')
-    return redirect(url_for('list_links'))
+        session.add(new_link)
+        session.commit()
+        session.refresh(new_link)
+    flash('Link has been created', 'success')
+    return redirect(url_for('get_links'))
 
-
-@app.route('/r/<short_name>')
-def redirect_to_original(short_name):
+@app.route('/api/links/<int:id>')
+def link_index(id):
     with Session(db_engine) as session:
-        link = session.exec(
-            select(db_models.Links).where(db_models.Links.short_name == short_name)
-        ).first()
+        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+    if not link:
+        return "Not found", 404
+    link = link.model_dump()
+    return render_template('link_index.html', link=link)
+
+@app.route('/api/links/<int:id>/update')
+def link_edit(id):
+    with Session(db_engine) as session:
+        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+    if not link:
+        return "Not found", 404
+    link_dict = link.model_dump()
+    return render_template('form_edit.html', link=link_dict, errors={})
+
+@app.post('/api/links/<int:id>/update')
+def link_patch(id):
+    data = request.form.to_dict()
+    errors = validate(data)
+    if errors:
+        data['id'] = id
+        return render_template(
+            'form_edit.html',
+            link=data,
+            errors=errors
+        ), 422
+        
+    with Session(db_engine) as session:
+        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
         if not link:
             return "Link not found", 404
-        return redirect(link.original_url)
+    
+        link.original_url = data.get('original_url')
+        link.short_name = data.get('short_name')
+
+        base_url = os.getenv('BASE_URL', 'http://localhost:8080')
+        link.short_url = f"{base_url.rstrip('/')}/{data.get('short_name')}"
+
+        session.commit()
+        session.refresh(link)
+
+    flash('Link has been updated', 'success')
+    return redirect(url_for('get_links'))
+
+@app.route('/api/links/<int:id>/delete_confirm')
+def link_delete_confirm(id):
+    with Session(db_engine) as session:
+            link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+            if not link:
+                return "Not found", 404    
+
+    delete_url = url_for('link_delete', id=id)
+
+    flash_message = f"Are you sure you want to delete '{link.short_name}'? <a href='{delete_url}' >YES, DELETE</a>"
+    flash(flash_message, "warning")
+    return redirect(url_for('get_links'))
+
+@app.route('/api/links/<int:id>/delete')
+def link_delete(id):
+    with Session(db_engine) as session:
+        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+        if not link:
+            return "Not found", 404
+        session.delete(link)
+        session.commit()
+    
+    flash('Link has been deleted', 'success')
+    return redirect(url_for('get_links'))
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run()
+

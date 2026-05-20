@@ -1,0 +1,25 @@
+<div>
+  <label>
+    Original name
+    <input type="text" name="original_url" value="{{ link.original_url|default('') }}">
+  </label>
+  {% if errors.original_url %}
+    <li>{{ errors.original_url }}</li>
+  {% endif %}
+</div>
+
+<div>
+  <label>
+    Short name
+    <input type="text" name="short_name" value="{{ link.short_name|default('') }}">
+  </label>
+  {% if errors.short_name %}
+    <li>{{ errors.short_name }}</li>
+  {% endif %}
+  {% if errors.special_symbols %}
+    <li>{{ errors.special_symbols }}</li>
+  {% endif %}
+  {% if errors.unique_name %}
+    <li>{{ errors.unique_name }}</li>
+  {% endif %}
+</div>
