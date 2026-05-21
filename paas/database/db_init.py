@@ -1,5 +1,6 @@
-from . import db_engine, db_models
-from sqlmodel import Field, Session, SQLModel
+from sqlmodel import SQLModel
+
+from . import db_engine
 
 
 def create_db_and_tables():

@@ -1,6 +1,6 @@
-from sqlmodel import Field, SQLModel
 from datetime import datetime
-import sqlalchemy as sa
+
+from sqlmodel import Field, SQLModel
 
 
 class Links(SQLModel, table=True):

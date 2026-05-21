@@ -1,10 +1,19 @@
 import os
 
-from flask import Flask, request, render_template, redirect, url_for, flash, get_flashed_messages
+from flask import (
+    Flask,
+    flash,
+    get_flashed_messages,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from sqlmodel import Session, select
-from ..database import db_engine, create_db_and_tables, db_models
-from .validator import validate
+from ast import literal_eval
 
+from ..database import create_db_and_tables, db_engine, db_models
+from .validator import validate
 
 create_db_and_tables()
 
@@ -17,9 +26,26 @@ def start_page():
 
 @app.route('/api/links')
 def get_links():
-    with Session(db_engine) as session:
-        links = session.exec(select(db_models.Links).order_by(db_models.Links.created_at)).all()
+    range_str = request.args.get('range')
+    
+    if not range_str:
+        with Session(db_engine) as session:
+            links = session.exec(select(db_models.Links).order_by(db_models.Links.created_at)).all()
 
+        messages = get_flashed_messages(with_categories=True)
+        links_list = [link.model_dump() for link in links]
+        return render_template('links_list.html', links=links_list, messages=messages)
+    
+    parsed_range = literal_eval(range_str)
+    
+    with Session(db_engine) as session:
+        links = session.exec(
+            select(db_models.Links)
+            .order_by(db_models.Links.created_at)
+            .offset(parsed_range[0])
+            .limit(parsed_range[1] - parsed_range[0])
+        ).all()
+        
     messages = get_flashed_messages(with_categories=True)
     links_list = [link.model_dump() for link in links]
 
@@ -48,7 +74,7 @@ def links_link():
         original_url=data.get('original_url'),
         short_name=data.get('short_name'),
         short_url=full_short_url
-    )   
+    )
 
     with Session(db_engine) as session:
         session.add(new_link)
@@ -86,12 +112,12 @@ def link_patch(id):
             link=data,
             errors=errors
         ), 422
-        
+
     with Session(db_engine) as session:
         link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
         if not link:
             return "Link not found", 404
-    
+
         link.original_url = data.get('original_url')
         link.short_name = data.get('short_name')
 
@@ -109,7 +135,7 @@ def link_delete_confirm(id):
     with Session(db_engine) as session:
             link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
             if not link:
-                return "Not found", 404    
+                return "Not found", 404
 
     delete_url = url_for('link_delete', id=id)
 
@@ -125,7 +151,7 @@ def link_delete(id):
             return "Not found", 404
         session.delete(link)
         session.commit()
-    
+
     flash('Link has been deleted', 'success')
     return redirect(url_for('get_links'))
 

@@ -6,5 +6,5 @@ def validate(link):
         errors['special_symbols'] = "Can't be special symbols"
     if not link.get('short_name'):
         errors['short_name'] = "Can't be blank"
-    
+
     return errors
