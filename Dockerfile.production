@@ -1,6 +1,5 @@
 FROM node:20-alpine AS frontend-loader
 WORKDIR /app
-
 RUN npm install @hexlet/project-devops-deploy-crud-frontend
 
 FROM python:3.12
@@ -13,6 +12,9 @@ RUN apt-get update && apt-get install -y libcap2-bin \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# ИСПРАВЛЕНИЕ: Забираем собранный фронтенд из первой стадии и кладём в аккуратную папку /app/dist
+COPY --from=frontend-loader /app/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist ./dist
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

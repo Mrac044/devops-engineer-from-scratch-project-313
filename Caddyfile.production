@@ -1,22 +1,21 @@
-:{$PORT} {
-    tls internal
-
+http://:{$PORT} {
     log {
         format json
     }
 
-    # Указываем корень со статикой фронтенда
-    root * /paas/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist
+    # ИСПРАВЛЕНИЕ: Указываем чистый и гарантированно существующий путь к фронтенду
+    root * /app/dist
 
-    # КОМНАТА 1: Если запрос начинается на /api — строго во Flask и никуда больше!
+    # Перенаправляем запросы на Flask, запущенный локально внутри контейнера
     handle /api* {
-        reverse_proxy app:5000
+        reverse_proxy 127.0.0.1:5000
     }
 
-    # КОМНАТА 2: Если запрос начинается на /r (редиректы) — тоже строго во Flask!
     handle /r* {
-        reverse_proxy app:5000
+        reverse_proxy 127.0.0.1:5000
     }
+
+    # Раздаем фронтенд
     handle {
         try_files {path} {path}/ /index.html
         file_server
