@@ -1,4 +1,3 @@
-# --- Этап 1: Получаем фронтенд ---
 FROM node:20-alpine AS frontend-loader
 WORKDIR /app
 
@@ -20,12 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY paas/ ./paas/
 
-COPY --from=frontend-loader /app/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist ./frontend/dist
-
 COPY Caddyfile.production /etc/caddy/Caddyfile
 
-RUN echo '#!/bin/sh\npython -m flask --app paas run --host=127.0.0.1 --port=5000 & \ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/sh\npython -m flask --app paas.app:app run --host=127.0.0.1 --port=5000 & \ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n' > /app/start.sh && chmod +x /app/start.sh
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["/app/start.sh"]
