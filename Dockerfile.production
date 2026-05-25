@@ -24,10 +24,7 @@ COPY --from=frontend-loader /app/node_modules/@hexlet/project-devops-deploy-crud
 
 COPY Caddyfile.production /etc/caddy/Caddyfile
 
-RUN echo '#!/bin/sh\n\
-python -m flask run --host=127.0.0.1 --port=5000 & \n\
-caddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n\
-' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/sh\npython -m flask --app paas run --host=127.0.0.1 --port=5000 & \ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n' > /app/start.sh && chmod +x /app/start.sh
 
 EXPOSE 80
 
