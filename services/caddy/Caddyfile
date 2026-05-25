@@ -1,0 +1,24 @@
+localhost, devops-engineer-from-scratch-project-313-mk6v.onrender.com {
+    tls internal
+
+    log {
+        format json
+    }
+
+    # Указываем корень со статикой фронтенда
+    root * /paas/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist
+
+    # КОМНАТА 1: Если запрос начинается на /api — строго во Flask и никуда больше!
+    handle /api* {
+        reverse_proxy app:5000
+    }
+
+    # КОМНАТА 2: Если запрос начинается на /r (редиректы) — тоже строго во Flask!
+    handle /r* {
+        reverse_proxy app:5000
+    }
+    handle {
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}

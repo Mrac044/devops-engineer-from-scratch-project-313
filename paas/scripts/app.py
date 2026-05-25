@@ -1,16 +1,9 @@
 import os
-
-from flask import (
-    Flask,
-    flash,
-    get_flashed_messages,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
-from sqlmodel import Session, select
 from ast import literal_eval
+
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from sqlmodel import Session, func, select
 
 from ..database import create_db_and_tables, db_engine, db_models
 from .validator import validate
@@ -19,60 +12,68 @@ create_db_and_tables()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
-
-@app.route('/')
-def start_page():
-    return render_template('index.html')
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "http://localhosts:5173"}},
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 @app.route('/api/links')
 def get_links():
     range_str = request.args.get('range')
-    
+
     if not range_str:
         with Session(db_engine) as session:
             links = session.exec(select(db_models.Links).order_by(db_models.Links.created_at)).all()
+        return jsonify([link.model_dump() for link in links]), 200
 
-        messages = get_flashed_messages(with_categories=True)
-        links_list = [link.model_dump() for link in links]
-        return render_template('links_list.html', links=links_list, messages=messages)
-    
-    parsed_range = literal_eval(range_str)
-    
+    try:
+        parsed_range = literal_eval(range_str)
+        start = int(parsed_range[0])
+        end = int(parsed_range[1])
+    except (ValueError, SyntaxError, IndexError, TypeError):
+        start, end = 0, 10
+
+    limit_count = end - start
+
     with Session(db_engine) as session:
+        total_links = session.exec(select(func.count(db_models.Links.id))).one()
+
         links = session.exec(
             select(db_models.Links)
             .order_by(db_models.Links.created_at)
-            .offset(parsed_range[0])
-            .limit(parsed_range[1] - parsed_range[0])
+            .offset(start)
+            .limit(limit_count)
         ).all()
-        
-    messages = get_flashed_messages(with_categories=True)
+
     links_list = [link.model_dump() for link in links]
 
-    return render_template('links_list.html', links=links_list, messages=messages)
+    response = app.make_response(jsonify(links_list))
+    response.headers['Content-Range'] = f"links {start}-{end}/{total_links}"
+    response.headers['Content-Type'] = 'application/json'
+    return response, 200
 
-@app.route('/api/links/new')
-def add_link():
-    return render_template('form_add.html', link={}, errors={})
 
 @app.post('/api/links')
-def links_link():
-    data = request.form.to_dict()
+def create_link():
+    data = request.get_json() or {}
     errors = validate(data)
+
+    short_name = data.get('short_name')
+
     with Session(db_engine) as session:
-        if session.exec(select(db_models.Links).where(db_models.Links.short_name == data.get('short_name'))).first():
+        if session.exec(select(db_models.Links).where(db_models.Links.short_name == short_name)).first():
             errors['unique_name'] = "This name already exists"
+
     if errors:
-        return render_template(
-            'form_add.html',
-            link=data,
-            errors=errors
-        ), 422
+        return jsonify({"errors": errors}), 422
+
     base_url = os.getenv('BASE_URL', 'http://localhost:8080')
-    full_short_url = f"{base_url.rstrip('/')}/{data.get('short_name')}"
+    full_short_url = f"{base_url.rstrip('/')}/r/{short_name}"
+
     new_link = db_models.Links(
         original_url=data.get('original_url'),
-        short_name=data.get('short_name'),
+        short_name=short_name,
         short_url=full_short_url
     )
 
@@ -80,82 +81,57 @@ def links_link():
         session.add(new_link)
         session.commit()
         session.refresh(new_link)
-    flash('Link has been created', 'success')
-    return redirect(url_for('get_links'))
 
-@app.route('/api/links/<int:id>')
-def link_index(id):
+    return jsonify(new_link.model_dump()), 201
+
+
+@app.route('/api/links/<int:id>', methods=['GET'])
+def get_link_by_id(id):
     with Session(db_engine) as session:
         link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
-    if not link:
-        return "Not found", 404
-    link = link.model_dump()
-    return render_template('link_index.html', link=link)
 
-@app.route('/api/links/<int:id>/update')
-def link_edit(id):
-    with Session(db_engine) as session:
-        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
     if not link:
-        return "Not found", 404
-    link_dict = link.model_dump()
-    return render_template('form_edit.html', link=link_dict, errors={})
+        return jsonify({"error": "Not found"}), 404
 
-@app.post('/api/links/<int:id>/update')
-def link_patch(id):
-    data = request.form.to_dict()
+    return jsonify(link.model_dump()), 200
+
+
+@app.route('/api/links/<int:id>', methods=['PUT'])
+def update_link(id):
+    data = request.get_json() or {}
     errors = validate(data)
+
     if errors:
-        data['id'] = id
-        return render_template(
-            'form_edit.html',
-            link=data,
-            errors=errors
-        ), 422
+        return jsonify({"errors": errors}), 422
 
     with Session(db_engine) as session:
         link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
         if not link:
-            return "Link not found", 404
+            return jsonify({"error": "Not found"}), 404
 
         link.original_url = data.get('original_url')
         link.short_name = data.get('short_name')
 
         base_url = os.getenv('BASE_URL', 'http://localhost:8080')
-        link.short_url = f"{base_url.rstrip('/')}/{data.get('short_name')}"
+        link.short_url = f"{base_url.rstrip('/')}/r/{data.get('short_name')}"
 
         session.commit()
         session.refresh(link)
+        return jsonify(link.model_dump()), 200
 
-    flash('Link has been updated', 'success')
-    return redirect(url_for('get_links'))
 
-@app.route('/api/links/<int:id>/delete_confirm')
-def link_delete_confirm(id):
-    with Session(db_engine) as session:
-            link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
-            if not link:
-                return "Not found", 404
-
-    delete_url = url_for('link_delete', id=id)
-
-    flash_message = f"Are you sure you want to delete '{link.short_name}'? <a href='{delete_url}' >YES, DELETE</a>"
-    flash(flash_message, "warning")
-    return redirect(url_for('get_links'))
-
-@app.route('/api/links/<int:id>/delete')
-def link_delete(id):
+@app.route('/api/links/<int:id>', methods=['DELETE'])
+def delete_link(id):
     with Session(db_engine) as session:
         link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
         if not link:
-            return "Not found", 404
+            return jsonify({"error": "Not found"}), 404
+
         session.delete(link)
         session.commit()
 
-    flash('Link has been deleted', 'success')
-    return redirect(url_for('get_links'))
+    return '', 204
 
 
 if __name__ == '__main__':
     app.run()
-

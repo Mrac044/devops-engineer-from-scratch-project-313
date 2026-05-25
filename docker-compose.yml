@@ -1,0 +1,25 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile  
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY:-dev-key-change-in-production}
+    volumes:
+      - .:/paas
+    ports:
+      - 5000:5000
+
+  caddy: # Веб-сервер
+    build: # Находится внутри services/caddy
+      context: .
+      dockerfile: services/caddy/Dockerfile
+    volumes:
+      - .:/paas
+      - ./services/caddy/Caddyfile:/etc/caddy/Caddyfile
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - app
