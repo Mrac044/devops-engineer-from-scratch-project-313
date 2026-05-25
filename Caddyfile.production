@@ -4,7 +4,7 @@
     }
 
     # Путь к статике фронтенда, которую мы скопировали на Шаге 1
-    root * /app/frontend/dist
+    root * /paas/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist
 
     # Перенаправляем запросы на Flask, запущенный локально внутри контейнера
     handle /api* {
