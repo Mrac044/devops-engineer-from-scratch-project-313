@@ -1,37 +1,32 @@
 # --- Этап 1: Получаем фронтенд ---
 FROM node:20-alpine AS frontend-loader
 WORKDIR /app
-# Скачиваем пакет с фронтендом, чтобы вытащить его статику
-RUN npm install @hexlet/project-devops-deploy-crud-frontend
 
-# --- Этап 2: Финальный продакшен-образ ---
 FROM python:3.12
 
-# Элегантный трюк: забираем готовый бинарник Caddy из официального образа
 COPY --from=caddy:2 /usr/bin/caddy /usr/bin/caddy
+
+RUN apt-get update && apt-get install -y libcap2-bin \
+    && setcap -r /usr/bin/caddy \
+    && apt-get purge -y libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Устанавливаем зависимости бэкенда
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код бэкенда
 COPY paas/ ./paas/
 
-# Копируем статику фронтенда из Этапа 1 в ту папку, где её будет искать Caddy
 COPY --from=frontend-loader /app/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist ./frontend/dist
 
-# Копируем наш продакшен-конфиг Caddy
 COPY Caddyfile.production /etc/caddy/Caddyfile
 
-# Создаем скрипт запуска, который поднимет и Flask, и Caddy одновременно
 RUN echo '#!/bin/sh\n\
 python -m flask run --host=127.0.0.1 --port=5000 & \n\
 caddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
-# Открываем порт 80 (Caddy будет слушать его)
 EXPOSE 80
 
 CMD ["/app/start.sh"]
