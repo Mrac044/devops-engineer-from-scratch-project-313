@@ -1,4 +1,4 @@
-devops-engineer-from-scratch-project-313-mk6v.onrender.com {
+:{$PORT} {
     log {
         format json
     }
