@@ -21,7 +21,7 @@ COPY paas/ ./paas/
 
 COPY Caddyfile.production /etc/caddy/Caddyfile
 
-RUN echo '#!/bin/sh\npython -m flask --app paas.app:app run --host=127.0.0.1 --port=5000 & \ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/sh\npython -m flask --app paas.scripts.app:app run --host=127.0.0.1 --port=5000 & \ncaddy run --config /etc/caddy/Caddyfile --adapter caddyfile\n' > /app/start.sh && chmod +x /app/start.sh
 
 EXPOSE 8080
 
