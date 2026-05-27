@@ -1,5 +1,9 @@
 FRAMEWORK ?= flask
 
+setup:
+	npm ci
+	uv sync
+
 start:
 ifeq ($(FRAMEWORK), flask)
 	npx concurrently "uv run flask --app paas/scripts/app run --port 8080" "npx start-hexlet-devops-deploy-crud-frontend"
