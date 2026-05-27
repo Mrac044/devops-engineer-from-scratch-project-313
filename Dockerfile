@@ -20,7 +20,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY paas/ ./paas/
-COPY ./services/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./services/nginx/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
 
