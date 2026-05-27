@@ -24,5 +24,5 @@ COPY ./services/nginx/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
 
-RUN echo '#!/bin/sh\nflask run --port=80 & \nnginx -g "daemon off;"\n' > /app/start.sh && chmod +x /app/start.sh
+RUN echo '#!/bin/sh\nflask run --port=5000 & \nnginx -g "daemon off;"\n' > /app/start.sh && chmod +x /app/start.sh
 CMD ["/app/start.sh"]
