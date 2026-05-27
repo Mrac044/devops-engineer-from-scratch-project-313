@@ -24,7 +24,11 @@ def get_links():
 
     if not range_str:
         with Session(db_engine) as session:
-            links = session.exec(select(db_models.Links).order_by(db_models.Links.created_at)).all()
+            links = session.exec(
+                select(db_models.Links)
+                .order_by(db_models.Links.created_at)
+                ).all()
+
         return jsonify([link.model_dump() for link in links]), 200
 
     try:
@@ -62,7 +66,9 @@ def create_link():
     short_name = data.get('short_name')
 
     with Session(db_engine) as session:
-        if session.exec(select(db_models.Links).where(db_models.Links.short_name == short_name)).first():
+        if session.exec(select(db_models.Links)
+                .where(db_models.Links.short_name == short_name)
+                ).first():
             errors['unique_name'] = "This name already exists"
 
     if errors:
@@ -88,7 +94,9 @@ def create_link():
 @app.route('/api/links/<int:id>', methods=['GET'])
 def get_link_by_id(id):
     with Session(db_engine) as session:
-        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+        link = session.exec(select(db_models.Links)
+            .where(db_models.Links.id == id)
+            ).first()
 
     if not link:
         return jsonify({"error": "Not found"}), 404
@@ -105,7 +113,9 @@ def update_link(id):
         return jsonify({"errors": errors}), 422
 
     with Session(db_engine) as session:
-        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+        link = session.exec(select(db_models.Links)
+            .where(db_models.Links.id == id)
+            ).first()
         if not link:
             return jsonify({"error": "Not found"}), 404
 
@@ -123,7 +133,9 @@ def update_link(id):
 @app.route('/api/links/<int:id>', methods=['DELETE'])
 def delete_link(id):
     with Session(db_engine) as session:
-        link = session.exec(select(db_models.Links).where(db_models.Links.id == id)).first()
+        link = session.exec(select(db_models.Links)
+            .where(db_models.Links.id == id)
+            ).first()
         if not link:
             return jsonify({"error": "Not found"}), 404
 
