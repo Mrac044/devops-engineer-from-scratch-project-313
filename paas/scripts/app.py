@@ -18,6 +18,10 @@ CORS(
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
 
+@app.get('/ping')
+def ping_pong():
+    return 'pong', 200
+
 @app.route('/api/links')
 def get_links():
     range_str = request.args.get('range')
