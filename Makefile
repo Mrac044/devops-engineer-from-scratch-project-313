@@ -16,7 +16,7 @@ start-debug:
 	npx concurrently "uv run flask --app paas/scripts/app --debug --port 8080" "npx start-hexlet-devops-deploy-crud-frontend"
 
 run:
-	uv run flask --app paas/scripts/app run --port 8080
+	uv run flask --app paas/scripts/app run --host 0.0.0.0 --port 8080
 
 debug:
 	uv run flask --app paas/scripts/app --debug run --port 8080
