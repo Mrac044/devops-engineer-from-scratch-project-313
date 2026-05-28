@@ -121,7 +121,7 @@ def update_link(id):
             .where(db_models.Links.id == id)
             ).first()
         if not link:
-            return jsonify({"error": "Link not found"}), 404
+            return jsonify({"detail": "Link not found"}), 404
 
         link.original_url = data.get('original_url')
         link.short_name = data.get('short_name')
