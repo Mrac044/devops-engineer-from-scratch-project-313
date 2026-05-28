@@ -76,7 +76,7 @@ def create_link():
             errors['unique_name'] = "This name already exists"
 
     if errors:
-        return jsonify({"errors": errors}), 422
+        return jsonify({"detail": errors}), 422
 
     base_url = os.getenv('BASE_URL', 'http://localhost:8080')
     full_short_url = f"{base_url.rstrip('/')}/r/{short_name}"
@@ -103,7 +103,7 @@ def get_link_by_id(id):
             ).first()
 
     if not link:
-        return jsonify({"error": "Not found"}), 404
+        return jsonify({"detail": "Link not found"}), 404
 
     return jsonify(link.model_dump()), 200
 
@@ -114,14 +114,14 @@ def update_link(id):
     errors = validate(data)
 
     if errors:
-        return jsonify({"errors": errors}), 422
+        return jsonify({"detail": errors}), 422
 
     with Session(db_engine) as session:
         link = session.exec(select(db_models.Links)
             .where(db_models.Links.id == id)
             ).first()
         if not link:
-            return jsonify({"error": "Not found"}), 404
+            return jsonify({"error": "Link not found"}), 404
 
         link.original_url = data.get('original_url')
         link.short_name = data.get('short_name')
@@ -141,7 +141,7 @@ def delete_link(id):
             .where(db_models.Links.id == id)
             ).first()
         if not link:
-            return jsonify({"error": "Not found"}), 404
+            return jsonify({"detail": "Link not found"}), 404
 
         session.delete(link)
         session.commit()
