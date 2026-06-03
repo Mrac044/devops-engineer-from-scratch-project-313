@@ -9,7 +9,7 @@ from .db_access import db_request, db_write
 from .validator import validate
 
 
-def init_routes(app):
+def init_routes(app):   # noqa: C901
 
     @app.get('/ping')
     def ping_pong():
