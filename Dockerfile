@@ -21,8 +21,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY paas/ ./paas/
 COPY ./services/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./paas/start.sh /app
+
+RUN chmod +x start.sh
 
 EXPOSE 80
 
-RUN echo '#!/bin/sh\nflask run --port=5000 & \nnginx -g "daemon off;"\n' > /app/start.sh && chmod +x /app/start.sh
 CMD ["/app/start.sh"]
