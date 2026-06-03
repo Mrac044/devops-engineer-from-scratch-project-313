@@ -4,14 +4,17 @@ import pytest
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
-app_file_module = sys.modules['paas.scripts.app']
-
 test_engine = create_engine(
     "sqlite:///:memory:",
     connect_args={"check_same_thread": False},
     poolclass=StaticPool
 )
 
+from .. import database
+
+database.db_engine = test_engine
+
+app_file_module = sys.modules['paas.scripts.app']
 app_file_module.db_engine = test_engine
 
 
