@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY paas/ ./paas/
 COPY ./services/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY ./paas/start.sh /app
+COPY ./start.sh /app
 
 RUN chmod +x start.sh
 
