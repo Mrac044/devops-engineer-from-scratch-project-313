@@ -3,8 +3,9 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
+from paas.scripts.api import api_bp
+
 from ..database import create_db_and_tables
-from .API import init_routes
 
 create_db_and_tables()
 
@@ -16,7 +17,7 @@ CORS(
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
 
-init_routes(app)
+app.register_blueprint(api_bp)
 
 
 if __name__ == '__main__':
