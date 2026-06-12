@@ -4,11 +4,24 @@
 
 [![CI](https://github.com/Mrac044/devops-engineer-from-scratch-project-313/actions/workflows/ci.yml/badge.svg)](https://github.com/Mrac044/devops-engineer-from-scratch-project-313/actions/workflows/ci.yml)
 
-# PaaS
+# Link shorter
 
-## Запуск приложения
+Веб-приложение на PaaS для создания и хранения коротких ссылок
 
-Команда: `make run`
+## Установка приложения
+
+- Установка фронтенда и синхронизация зависимостей
+    Команда: `make setup`
+
+## Запуск приложения (локальный хост)
+
+*Перед запуском проверьте наличие переменной окружения `DATABASE_URL` или передайте её вручную*
+
+- В обычном режиме
+    Команда: `make start`
+
+- В режиме отладки
+    Команда: `make start-debug`
 
 ## Ссылка на развёрнутое приложение
 

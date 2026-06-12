@@ -1,4 +1,4 @@
-from ..scripts.app import app
+from ..src.app import app
 
 __all__ = (
     app

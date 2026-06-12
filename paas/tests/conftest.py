@@ -16,7 +16,7 @@ test_engine = create_engine(
 
 database.db_engine = test_engine
 
-app_file_module = sys.modules['paas.scripts.app']
+app_file_module = sys.modules['paas.src.app']
 app_file_module.db_engine = test_engine
 
 

@@ -3,7 +3,7 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
-from paas.scripts.api import api_bp
+from paas.src.api import api_bp
 
 from ..database import create_db_and_tables
 
