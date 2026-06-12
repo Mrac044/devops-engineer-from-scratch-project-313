@@ -3,7 +3,6 @@ WORKDIR /app
 RUN npm install @hexlet/project-devops-deploy-crud-frontend
 
 
-
 FROM python:3.12
 
 WORKDIR /app
@@ -12,7 +11,7 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 COPY --from=frontend-loader /app/node_modules/@hexlet/project-devops-deploy-crud-frontend/dist/. /app/public/
 
-ENV FLASK_APP=paas/scripts/app.py
+ENV FLASK_APP=paas/src/app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
 COPY requirements.txt .
