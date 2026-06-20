@@ -118,7 +118,7 @@ def delete_link(id):
     return '', 204
 
 
-@api_bp.route('/<short_link>')
+@api_bp.route('/r/<short_link>')
 def redirect_to_short_link(short_link):
     short_link = db.get_short_name_if_exists(short_link)
 
