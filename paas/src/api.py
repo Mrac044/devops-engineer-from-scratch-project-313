@@ -1,7 +1,7 @@
 import os
 from ast import literal_eval
 
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, jsonify, make_response, redirect, request
 
 from ..database import db_models
 from . import db_access as db
@@ -116,3 +116,13 @@ def delete_link(id):
     db.db_write('delete', link)
 
     return '', 204
+
+
+@api_bp.route('/<short_link>')
+def redirect_to_short_link(short_link):
+    short_link = db.get_short_name_if_exists(short_link)
+
+    if not short_link:
+        return jsonify({"detail": "Link not found"}), 404
+
+    return redirect(short_link.original_url)
