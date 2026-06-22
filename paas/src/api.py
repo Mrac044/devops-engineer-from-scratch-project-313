@@ -118,11 +118,11 @@ def delete_link(id):
     return '', 204
 
 
-@api_bp.route('/r/<short_link>')
-def redirect_to_short_link(short_link):
-    short_link = db.get_short_name_if_exists(short_link)
+@api_bp.route('/api/<short_name>')
+def redirect_to_original(short_name):
+    link = db.get_short_name_if_exists(short_name)
 
-    if not short_link:
+    if not link:
         return jsonify({"detail": "Link not found"}), 404
 
-    return redirect(short_link.original_url)
+    return redirect(link.original_url)
